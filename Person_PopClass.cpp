@@ -171,7 +171,7 @@ class Population : public Person {
 			//should also write print statements here
 			//might want to create separate methods or something; 
 			//want to allow different ways to show output....
-			while (x > 0)
+			while (x > 0 || day < 6) //added day < 6 to go beyond infection period
 			{
 				update();
 				x = count_infected();
