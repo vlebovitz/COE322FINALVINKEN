@@ -5,11 +5,12 @@
 #include <random>
 #include <vector>
 
-using std::cin
-using std::cout
-using std::endl
-using std::string
-using std::vector
+using std::cin;
+using std::cout;
+using std::endl;
+using std::string;
+using std::vector;
+using std::to_string;
 
 //consider using a compartmental model in addition to a contact model
 class Person {
@@ -35,12 +36,13 @@ class Person {
 		//not sure if we want to use this; can easily just infect somebody...
 		//only real use would be to vaccinate people; could actually do this randomly
 		//need to figure out best way to create 10k people objects
-		Person(int state)
+		Person(int state) //probably won't end up using this constructor
 		{
 			condition = state;
 			name = "avgJoe";
-			days = 0;
+			//days = 0;
 			//SSN = SSN_recent + 1;
+		}
 		
 		//returns description of person's state as a string
 		string status_string()
@@ -52,7 +54,8 @@ class Person {
 			}else if(condition == -4){
 				return "vaccinated";
 			}else{
-				return "sick, " + condition " day(s) left";
+				string result = "sick, "+ std::to_string(condition) + " day(s) left.";
+				return result;
 			}
 		}
 		
@@ -64,25 +67,31 @@ class Person {
 
 			//this could be expanded upon maybe or something...idk lol
 			
-			//increments n by -1 if it is non zero, stops when equal to zero
 
+			//only for testing purposes - need to alter this function
+			//cout << "Joe is " << status_string() << endl;
+
+			//increments n by -1 if it is non zero, stops when equal to zero
 			if (condition > 0) {
 				condition--;
 			}
+
+			
 		}
 		
 		//infect a person, disease runs for n days
 		void infect(int n)
 		{
 			condition = n;
+			//cout << n << endl;
 			//days = n;
 		}
 		
 		//indicates whether the person has been sick and is recovered
 		//NOTE: probably should return true for vaccinated and recovered (?)
-		boolean is_stable()
+		bool is_stable()
 		{
-			if (condition == 0 || condition == 4){
+			if (condition == 0 || condition == -4){
 				return true;
 			}else{
 				return false;
@@ -92,20 +101,22 @@ class Person {
 };
 
 //inherts Person class, as a Population is a vector of people
-class Population : class Person {
+class Population : public Person {
 
 	protected:
 		vector<Person> pop = {};
-		int n;
+		int n, day;
 	public:
 		
 		//Default constructor, mainly a tester - one person in the population
 		Population()
 		{
-			//can combine these two lines; will do so in 2nd constructor
-			person1 = Person();
-			pop.pushback(person1);
+			//combined lines
+			//Person person1 = Person(); - could be useful to track 
+			//the "first" person as an example/to print out easily
+			pop.push_back(Person());
 			n = 1;
+			day = 0;
 		}
 		
 		//Constructor that sets population of size n
@@ -113,7 +124,7 @@ class Population : class Person {
 		{
 			n = npeople;
 			for (int i = 0; i < npeople; i++){
-				pop.pushback(Person());
+				pop.push_back(Person());
 			}
 		}
 		
@@ -121,7 +132,8 @@ class Population : class Person {
 		void random_infection()
 		{
 			int dude = rand()%n; //think this works? can test somewhere
-			pop(dude).infect(5); //default: sick for 5 days...might want to allow change
+			//cout << dude << endl;
+			pop[dude].infect(5); //default: sick for 5 days...might want to allow change
 		}
 		
 		//counts the number of infected people in the population
@@ -129,7 +141,7 @@ class Population : class Person {
 		{
 			int num = 0;
 			for(int i = 0; i < n; i++){
-				if (pop(i).is_stable() == false){
+				if (!pop[i].is_stable()){
 					num++;
 				}
 			}
@@ -140,7 +152,11 @@ class Population : class Person {
 		void update()
 		{
 			for(int i = 0; i < n; i++){
-				pop(i).update();
+				//see output for "joe" (1st guy) after we update each day
+				if(i == 0){
+					cout << "Day " << day << ": Joe is " << pop[i].status_string() << endl;
+				}
+				pop[i].update();
 			}
 		}
 		
@@ -155,10 +171,11 @@ class Population : class Person {
 			//should also write print statements here
 			//might want to create separate methods or something; 
 			//want to allow different ways to show output....
-			while (x > 0)
+			while (x > 0 || day < 6) //added day < 6 to go beyond infection period
 			{
 				update();
 				x = count_infected();
+				day++;
 			}
 		}
 		
@@ -179,16 +196,23 @@ int main()
 {
 			srand((unsigned)time(0));
 			Population testPop = Population();
-			testPop.getPop(0).infect(5);
-			cout << testPop.getPop(0).status_string(); << endl;
+
+			testPop.runSim();
+			//testPop.getPop(0).infect(5);
+			//cout << testPop.getPop(0).status_string() << endl;
 			
-			boolean stable = testPop.getPop(0).is_stable();
+			//issue with "getPop", was trying to return Person, function 
+			//definition actually returned a vector
+
+			/*
+			bool stable = testPop.getPop(0).is_stable();
 			while (!stable)
 			{
 				testPop.getPop(0).update();
-				cout << testPop.getPop(0).status_string(); << endl;
+				cout << testPop.getPop(0).status_string() << endl;
 				stable = testPop.getPop(0).is_stable();
 			}
+			*/
 			
 			return 0;
 }
