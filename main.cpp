@@ -190,10 +190,12 @@ public:
 
 	//not working, not sure why - uncommented old code I commented out; not of most importance
 	//simulates contact between two people, determines if a contact results in an infection
-	void contact(Person joe)
+	void contact(Person &joe)
 	{
-		//don't need to use srand(time(NULL)) here, only need to include it in the main programs (I THINK)
+		//srand(time(NULL));
+		//srand((unsigned)time(0));
 		float x = double(rand())/ RAND_MAX;
+		cout << "random num: " << x << endl;
 		if (x < p)
 		{
 			joe.infect(5);
@@ -243,12 +245,14 @@ public:
 	}
 
 	//function that simulates interactions, where people can only interact with their neighbors in the arrary
+	
+	//
 	void neighborInfect()
 	{
 		//when vaccinated people are added to the area, they act as boundaries/prevent disease spread
 		double rate = 0;
-		srand(time(NULL));
-		set_probability_of_transfer(0.6);
+		//srand(time(NULL));
+		set_probability_of_transfer(0.3);
 		vector<int> totalInfected = {};
 
 		for (int j = 0; j < n; j++)
@@ -277,21 +281,21 @@ public:
 				{
 					if (pop[totalInfected[i]+1].status_string() == "susceptible")
 					{
-						//contact(pop[totalInfected[i]+1]);
-						rate = double(rand())/ RAND_MAX;
-						if (rate < p)
-						{
-							pop[totalInfected[i]+1].infect(5);
-						}
+						contact(pop[totalInfected[i]+1]);
+						//rate = double(rand())/ RAND_MAX;
+						//if (rate < p)
+						//{
+							//pop[totalInfected[i]+1].infect(5);
+						//}
 					}
 					if (pop[totalInfected[i]-1].status_string() == "susceptible")
 					{
-						//contact(pop[totalInfected[i]-1]);
-						rate = double(rand())/ RAND_MAX;
-						if (rate < p)
-						{
-							pop[totalInfected[i]-1].infect(5);
-						}
+						contact(pop[totalInfected[i]-1]);
+						//rate = double(rand())/ RAND_MAX;
+						//if (rate < p)
+						//{
+							//pop[totalInfected[i]-1].infect(5);
+						//}
 					}
 				}
 				//decided to treat ends of vector as boundaries/dead ends
@@ -299,24 +303,24 @@ public:
 				{
 					if (pop[totalInfected[i]+1].status_string() == "susceptible")
 					{
-						//contact(pop[totalInfected[i]+1]);
-						rate = double(rand())/ RAND_MAX;
-						if (rate < p)
-						{
-							pop[totalInfected[i]+1].infect(5);
-						}
+						contact(pop[totalInfected[i]+1]);
+						//rate = double(rand())/ RAND_MAX;
+						//if (rate < p)
+						//{
+							//pop[totalInfected[i]+1].infect(5);
+						//}
 					}
 				}
 				else
 				{
 					if (pop[totalInfected[i]-1].status_string() == "susceptible")
 					{
-						//contact(pop[totalInfected[i]-1]);
-						rate = double(rand())/ RAND_MAX;
-						if (rate < p)
-						{
-							pop[totalInfected[i]-1].infect(5);
-						}
+						contact(pop[totalInfected[i]-1]);
+						//rate = double(rand())/ RAND_MAX;
+						//if (rate < p)
+						//{
+							//pop[totalInfected[i]-1].infect(5);
+						//}
 					}
 				}
 
@@ -329,16 +333,60 @@ public:
 		}
 		cout << endl;
 	}
-
+	//talk about effectiveness of how truly random whatever method i use is
+	//also talk about efficiency of the method i use
 	//function that "codes random interactions" - y = # people each person interacts with, y < n-1
+	/*
 	void random_interation(int y)
 	{
+
 		//need to figure out some way to connect the people
 		//should I use graph theory? brute force?....
 		//can possibly incorporate the knuth algorithm thing into this
 
 		//only becomes challenging when # sick people > n interactions (which almost always happens)
+	
+		//idea: store in n x n matrix, like airport map, should be 6 1's in each row and col
+		//draw back: for very large populations, this will be slow/require too much memory
+
+		//I feel like this is really innefficient lol but idk how to do this
+		//vector<int> pop_Loc
+		
+
+		//easier: start with the first person, have them interact with 6 people,
+		//then "remove" them from the list/random #generator. if someone is interacted
+		//with 6 times, also remove them from the list.
+
+		//create vector with same number of elements as number of infected ppl
+		vector<Person> pointer_pop (pop.count_infected());
+		vector<int> interaction_count(n,0);
+
+		//only need to track interactions that include an infected person
+		for(int i = 0; i < pop.count_infected(); i++){
+			if(pop[i].get_condition() > 0){
+				pointer_pop[i] == &pop[i]; //not sure if this is the right way to declare a pointer
+				//might want to make a person pointer, then set pointer
+				//equal to pop[i], set arrary equal to that...but then would have to deference the pointer?.....
+				//need to figure out the best way to do this!!!!
+			}
+		}
+				
+		//
+		for(int j = 0; j < pointer_pop.size(); j++){
+			//randomly interact with 6 people (knuble shuffle?)
+			//checks that the person objects are not equal i.e. would be contacting itself
+
+			//if(interaction_count[randomnum] == 6){
+				//pop this and the element in the pointer_pop vector
+			//}
+
+
+			//only commented to test mainNEigh_vacc thing
+			//pointer_pop.pop();
+
+		}
 	}
+	*/
 
 	//counts the number of infected people in the population
 	int count_infected()
@@ -420,7 +468,8 @@ public:
 //this just tests whatever we are working on
 int main()
 {
-	srand((unsigned)time(0));
+	//srand((unsigned)time(0));
+	srand(time(NULL));
 	Population pop = Population(7);
 	bool done = false;
 	string status = "";
