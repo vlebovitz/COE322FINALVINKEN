@@ -156,22 +156,53 @@ public:
 	
 	}
 	//creates algorithm for interactions
-	void reactionRate()
+	void neighborInfect()
 	{
 		float rate = 0;
 		srand(time(NULL));
+		set_probability_of_transfer(0.6);
 
 		for (int i = 0; i < n; i++)//loop through entire vector
 		{
 			 rate = rand() / RAND_MAX;
-				if (pop[i].status_string() == "susceptible") //target susceptible people
-				{
-					if (rate < probability)//probability check
-					{
-						pop[i].infect(5);//infect the intended person for 5 days
-					}
-				}
-			
+			 if (pop[i].status_string() == "sick") 
+			 {
+				 if (i != 0 && i != (n - 1))
+				 {
+					 if (pop[i+1].status_string() == "susceptible") //target susceptible people
+					 {
+						 if (rate < probability)//probability check
+						 {
+							 pop[i+1].infect(5);//infect the intended person for 5 days
+						 }
+					 }
+					 if (pop[i-1].status_string() == "susceptible")
+					 {
+						 if (rate<probability)
+						 {
+							 pop[i-1].infect(5);
+						 } 
+					 }
+					 else if (i == 0)
+					 {
+						 if (pop[i + 1].status_string() == "susceptible")
+						 {
+							 if (rate < probability)
+							 {
+								 pop[i+1].infect(5);
+							 }
+						 }
+					 }
+					 else if (pop[i - 1].status_string() == "susceptible")
+					 {
+						 if (rate < probability)
+						 {
+							 pop[i-1].infect(5);
+						 }
+					 }
+
+				 }
+			 }
 		}
 	}
 
@@ -225,7 +256,17 @@ public:
 	}
 	void runSim1()//!!this is the actual function for testing!!
 	{
-		reactionRate();
+		random_infection();
+
+		while ( count_infected()>0)
+		{
+			update();
+			neighborInfect();
+			day++;
+
+		}
+
+		
 
 	}
 
@@ -245,10 +286,12 @@ public:
 int main()
 {
 	srand((unsigned)time(0));
-	Population testPop = Population();
+	Population testPop = Population(3);
 
-	testPop.runSim();
+	testPop.runSim1();
 	//testPop.getPop(0).infect(5);
+	
+	//testPop.neighborInfect();
 	//cout << testPop.getPop(0).status_string() << endl;
 
 	//issue with "getPop", was trying to return Person, function 
