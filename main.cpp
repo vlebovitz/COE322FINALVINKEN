@@ -96,6 +96,12 @@ public:
 
 	}
 
+	//vaccinates a person - sets their condition to -4
+	void vaccinate()
+	{
+		condition = -4;
+	}
+
 	//indicates whether the person has been sick and is recovered
 	//NOTE: probably should return true for vaccinated and recovered (?)
 	bool is_stable()
@@ -108,6 +114,27 @@ public:
 		}
 	}
 
+	//sole purpose is to write to a text file
+	int get_condition()
+	{
+		return condition;
+	}
+
+	/* might want to create an "is vaccinated" method, original
+		condition above for is_stable() was if condition == 0 || condition == -4
+
+	bool is_vaccinated()
+	{
+		if(condition == -4){
+			return true;
+		}else{
+			return false;
+		}
+	}
+
+
+	*/
+
 };
 
 //inherts Person class, as a Population is a vector of people
@@ -116,7 +143,9 @@ class Population : public Person {
 protected:
 	vector<Person> pop = {};
 	int n, day;
-	float p;
+
+	//p = probability of disease transfer on contact, v = % of vaccinated people
+	float p, v;
 public:
 
 	//Default constructor, mainly a tester - one person in the population
@@ -142,19 +171,66 @@ public:
 	//infects a random person in the population
 	void random_infection()
 	{
-		int dude = rand() % n; //think this works? can test somewhere
-		//cout << dude << endl;
-		pop[dude].infect(5); //default: sick for 5 days...might want to allow change
+		int dude = rand() % n;
+
+		//most likely want to allow this to be changed!!!
+		pop[dude].infect(5); 
 
 	}
 
-	//sets the probability of 
+	//sets the probability that the disease will be transferred when ppl interact
 	void set_probability_of_transfer(float probability)
 	{	
 		p = probability;
 	}
 
-	//currently has entire population interat with phantom person
+	//sets the % (0<x<1) of people who are vaccinated; sets that portion of the
+	//population's condition to "vaccinated"
+	void set_innoculation(float x)
+	{
+		v = x;
+		//rounds the percent to get a whole number of people
+		int num = int(v*n);
+		vector<int> vac_Location(num,0);
+
+		int y;
+		int in, im;
+
+		//knuth algorithm, generates unique random numbers between 0 and n
+		im = 0;
+		for (in = 0; in < n && im < num; ++in) {
+  			int rn = n - in;
+  			int rm = num - im;
+ 			//puts random, non-repeated number 0-n in the vector of the location of vaccinated people
+ 			if (rand() % rn < rm)    
+    			vac_Location[im++] = in; //+ 1; /* +1 since your range begins from 1 */
+		}
+		//not really sure what this does
+		//assert(im == M);
+
+		//cout << "vector of locations of ppl who got vaccinated" << endl;
+
+		//vacciantes the people at the locations randomly picked by the knurth algo
+		for(int k = 0; k < num; k++)
+		{
+			pop[vac_Location[k]].vaccinate(); //vaccinates person in sepcified locaiton with vaccinate method in person class
+			//cout << vac_Location[k] << " ";
+		}
+		//was used for testing
+
+		/*cout << endl;
+		cout << "vector of the conditions of all the people in the population:" << endl;
+		for(int j = 0; j < n; j++)
+		{
+			cout << pop[j].get_condition() << " ";
+		}
+		cout << endl;
+		*/
+	}
+
+	//currently has entire population interat with phantom person (will be deleted when merged, not used)
+	
+	/*
 	void reactionRate()
 	{
 		float rate = 0;
@@ -174,7 +250,7 @@ public:
 		}
 	}
 
-	void 
+	*/
 
 
 	//counts the number of infected people in the population
@@ -182,7 +258,7 @@ public:
 	{
 		int num = 0;
 		for (int i = 0; i < n; i++) {
-			if (!pop[i].is_stable()) {
+			if (pop[i].get_condition() > 0){
 				num++;
 			}
 		}
@@ -194,9 +270,9 @@ public:
 	{
 		for (int i = 0; i < n; i++) {
 			//see output for "joe" (1st guy) after we update each day
-			if (i == 0) {
-				cout << "Day " << day << ": Joe is " << pop[i].status_string() << endl;
-			}
+			//if (i == 0) {
+				//cout << "Day " << day << ": Joe is " << pop[i].status_string() << endl;
+			//}
 			pop[i].update();
 		}
 	}
@@ -224,7 +300,7 @@ public:
 	//could just write it in the main program
 	void runSim1()//!!this is the actual function we will use!!!
 	{
-		reactionRate();
+		//reactionRate();
 
 
 		int x = 1; //want to do this on the current obj
@@ -232,9 +308,6 @@ public:
 
 		while (x > 0 || day < 6) //added day < 6 to go beyond infection period
 		{
-
-			
-
 			update();
 			x = count_infected();
 			day++;
@@ -248,7 +321,7 @@ public:
 	//the person/change their status??? (and be updated in the vector??)
 	vector<Person> getPop()
 	{
-		return pop;
+		return pop; //probably want to delete this method
 	}
 
 
@@ -263,24 +336,53 @@ public:
 int main()
 {
 	srand((unsigned)time(0));
-	Population testPop = Population();
+	Population pop = Population(7);
 
-	testPop.runSimTest();
-	//testPop.getPop(0).infect(5);
-	//cout << testPop.getPop(0).status_string() << endl;
+	int i = 0;
+	int j;
+	bool done = false;
+	string status = "";
 
-	//issue with "getPop", was trying to return Person, function 
-	//definition actually returned a vector
+	pop.random_infection(); //infects random person for 5 days
 
-	/*
-	bool stable = testPop.getPop(0).is_stable();
-	while (!stable)
+	//also infecting them on first day, only want to test our population class
+	while(!done)
 	{
-		testPop.getPop(0).update();
-		cout << testPop.getPop(0).status_string() << endl;
-		stable = testPop.getPop(0).is_stable();
-	}
-	*/
+		//make sure update method only subtracts 1 from n
 
+		i++;
+		cout << "Day " << i << ", #sick = " << pop.count_infected() << " : ";
+		for (j = 0; j < 7; j++)
+		{
+			//not sure if this is the best way to access
+			status = pop.getPop()[j].status_string();
+			if(status == "susceptible"){
+				cout << "? ";
+			}else if(status == "sick"){
+				cout <<"+ ";
+			}else{
+				cout <<"- "; //recovered
+			}
+		}
+		cout << endl;
+
+		if(pop.count_infected() == 0)
+		{
+			done = true;
+		}else{ //no need to update if disease has already run its course
+			//including at the end, because we are infecting the person outside of loop
+			pop.update();
+		}
+	}
+	cout << "The disease ran its course on Day " << i << endl;
 	return 0;
+
+	/* code below tested set_innoculation to check that it worked
+
+	//should write an actual test method to test in conjuction with 
+	//infect_neighbor; this is just testing the function
+	Population testPop = Population(8);
+	testPop.set_innoculation(.25); //vacinates 1/4 of the population
+	//printing within set_innoculation to test the method
+	*/
 }
