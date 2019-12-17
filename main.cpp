@@ -29,7 +29,7 @@ public:
 		//n(days left): sick, -2: susceptible, 0: recovered, -4: vaccinated
 		condition = -2; //default condition is susceptible
 		name = "avgJoe";
-	
+
 
 		//days = 0;
 		//SSN = SSN_recent + 1;
@@ -43,7 +43,7 @@ public:
 	{
 		condition = state;
 		name = "avgJoe";
-	
+
 		//days = 0;
 		//SSN = SSN_recent + 1;
 	}
@@ -60,6 +60,7 @@ public:
 		else if (condition == -4) {
 			return "vaccinated";
 		}
+		//use the line that was commented out to test results
 		else {
 			//string result = "sick, " + std::to_string(condition) + " day(s) left.";
 			return "sick";
@@ -89,10 +90,19 @@ public:
 	//infect a person, disease runs for n days
 	void infect(int n)
 	{
-		condition = n;
+		if (condition == -2)
+		{
+			condition = n;
+		}
 		//cout << n << endl;
 		//days = n;
 
+	}
+
+	//vaccinates a person - sets their condition to -4
+	void vaccinate()
+	{
+		condition = -4;
 	}
 
 	//indicates whether the person has been sick and is recovered
@@ -107,6 +117,24 @@ public:
 		}
 	}
 
+	//sole purpose is to write to a text file
+	int get_condition()
+	{
+		return condition;
+	}
+
+	/* might want to create an "is vaccinated" method, original
+		condition above for is_stable() was if condition == 0 || condition == -4
+	bool is_vaccinated()
+	{
+		if(condition == -4){
+			return true;
+		}else{
+			return false;
+		}
+	}
+	*/
+
 };
 
 //inherts Person class, as a Population is a vector of people
@@ -115,7 +143,9 @@ class Population : public Person {
 protected:
 	vector<Person> pop = {};
 	int n, day;
-	float probability;
+
+	//p = probability of disease transfer on contact, v = % of vaccinated people
+	float p, v;
 public:
 
 	//Default constructor, mainly a tester - one person in the population
@@ -141,77 +171,144 @@ public:
 	//infects a random person in the population
 	void random_infection()
 	{
-		int dude = rand() % n; //think this works? can test somewhere
-		//cout << dude << endl;
-		pop[dude].infect(5); //default: sick for 5 days...might want to allow change
+		int dude = rand() % n;
 
-
+		//most likely want to allow this to be changed!!!
+		pop[dude].infect(5);
 
 	}
 
-	//sets the probability of 
+	//sets the probability that the disease will be transferred when ppl interact
 	void set_probability_of_transfer(float probability)
-	{	
-		probability = 0.6;
-	
+	{
+		p = probability;
 	}
+
+	//sets the % (0<x<1) of people who are vaccinated; sets that portion of the
+	//population's condition to "vaccinated"
+	void set_innoculation(float x)
+	{
+		v = x;
+		//rounds the percent to get a whole number of people
+		int num = int(v * n);
+		vector<int> vac_Location(num, 0);
+
+		int y;
+		int in, im;
+
+		//knuth algorithm, generates unique random numbers between 0 and n
+		im = 0;
+		for (in = 0; in < n && im < num; ++in) {
+			int rn = n - in;
+			int rm = num - im;
+			//puts random, non-repeated number 0-n in the vector of the location of vaccinated people
+			if (rand() % rn < rm)
+				vac_Location[im++] = in; //+ 1; /* +1 since your range begins from 1 */
+		}
+		//not really sure what this does
+		//assert(im == M);
+
+		//cout << "vector of locations of ppl who got vaccinated" << endl;
+
+		//vacciantes the people at the locations randomly picked by the knurth algo
+		for (int k = 0; k < num; k++)
+		{
+			pop[vac_Location[k]].vaccinate(); //vaccinates person in sepcified locaiton with vaccinate method in person class
+			//cout << vac_Location[k] << " ";
+		}
+		//was used for testing
+
+		/*cout << endl;
+		cout << "vector of the conditions of all the people in the population:" << endl;
+		for(int j = 0; j < n; j++)
+		{
+			cout << pop[j].get_condition() << " ";
+		}
+		cout << endl;
+		*/
+	}
+
+
 	//creates algorithm for interactions
 	void neighborInfect()
 	{
 		float rate = 0;
 		srand(time(NULL));
 		set_probability_of_transfer(0.6);
+		vector<int> totalInfected = {};
 
-		for (int i = 0; i < n; i++)//loop through entire vector
+		for (int j = 0; j < n; j++)
 		{
-			 rate = rand() / RAND_MAX;
-			 if (pop[i].status_string() == "sick") 
-			 {
-				 if (i != 0 && i != (n - 1))
-				 {
-					 if (pop[i+1].status_string() == "susceptible") //target susceptible people
-					 {
-						 if (rate < probability)//probability check
-						 {
-							 pop[i+1].infect(5);//infect the intended person for 5 days
-						 }
-					 }
-					 if (pop[i-1].status_string() == "susceptible")
-					 {
-						 if (rate<probability)
-						 {
-							 pop[i-1].infect(5);
-						 } 
-					 }
-					 else if (i == 0)
-					 {
-						 if (pop[i + 1].status_string() == "susceptible")
-						 {
-							 if (rate < probability)
-							 {
-								 pop[i+1].infect(5);
-							 }
-						 }
-					 }
-					 else if (pop[i - 1].status_string() == "susceptible")
-					 {
-						 if (rate < probability)
-						 {
-							 pop[i-1].infect(5);
-						 }
-					 }
-
-				 }
-			 }
+			if (pop[j].status_string() == "sick")
+			{
+				totalInfected.push_back(j);
+			}
 		}
+
+		
+
+		for (int i = 0; i < totalInfected.size(); i++)
+		{
+			rate = rand() / RAND_MAX;
+			if (pop[totalInfected[i]].status_string() == "sick")
+			{
+				if (totalInfected[i] > 0 && totalInfected[i] < (n - 1))
+				{
+					if (pop[totalInfected[i]+1].status_string() == "susceptible")
+					{
+						if (rate < p)
+						{
+							pop[totalInfected[i]+1].infect(5);
+						}
+					}
+					if (pop[totalInfected[i]-1].status_string() == "susceptible")
+					{
+						if (rate < p)
+						{
+							pop[totalInfected[i]-1].infect(5);
+						}
+					}
+				}
+				else if (totalInfected[i]  == 0)
+				{
+					if (pop[totalInfected[i]+1].status_string() == "susceptible")
+					{
+						if (rate < p)
+						{
+							pop[totalInfected[i]+1].infect(5);
+						}
+					}
+				}
+				else
+				{
+					if (pop[totalInfected[i]-1].status_string() == "susceptible")
+					{
+						if (rate < p)
+						{
+							pop[totalInfected[i]-1].infect(5);
+						}
+					}
+				}
+
+			}//if statement containing everything
+		}
+		for (int i = 0; i < n; i++)
+		{
+			cout << pop[i].get_condition();
+		}
+		cout << endl;
+
 	}
+
+	
+
 
 	//counts the number of infected people in the population
 	int count_infected()
 	{
 		int num = 0;
 		for (int i = 0; i < n; i++) {
-			if (!pop[i].is_stable()) {
+			if (pop[i].get_condition() > 0) {
 				num++;
 			}
 		}
@@ -223,25 +320,20 @@ public:
 	{
 		for (int i = 0; i < n; i++) {
 			//see output for "joe" (1st guy) after we update each day
-			if (i == 0) {
-				cout << "Day " << day << ": Joe is " << pop[i].status_string() << endl;
-			}
+			//if (i == 0) {
+				//cout << "Day " << day << ": Joe is " << pop[i].status_string() << endl;
+			//}
 			pop[i].update();
 		}
 	}
 
 	//this function runs the simulation by looping the update method
 	//from the population 
-	void runSim()
+	void runSimTest()
 	{
 		//do we need to use "this" as done in JAVA??
 		int x = 1; //want to do this on the current obj
 		random_infection();
-
-
-
-
-		
 
 		//should also write print statements here
 		//might want to create separate methods or something; 
@@ -254,20 +346,22 @@ public:
 			day++;
 		}
 	}
-	void runSim1()//!!this is the actual function for testing!!
+	//might want to create different sims for different "Qs", or 
+	//could just write it in the main program
+	void runSim1()//!!this is the actual function we will use!!!
 	{
+		//reactionRate();
+
+
+		int x = 1; //want to do this on the current obj
 		random_infection();
 
-		while ( count_infected()>0)
+		while (x > 0 || day < 6) //added day < 6 to go beyond infection period
 		{
 			update();
-			neighborInfect();
+			x = count_infected();
 			day++;
-
 		}
-
-		
-
 	}
 
 	//most likely need to add a setter method to allow me to access
@@ -277,35 +371,40 @@ public:
 	//the person/change their status??? (and be updated in the vector??)
 	vector<Person> getPop()
 	{
-		return pop;
+		return pop; //probably want to delete this method
 	}
 
 
 };
 
+
+//note - we might want to create multiple main programs and turn them in;
+//they would output the stuff at each separate step - do we need a main program 
+//for this file if it only contains the classes????
+
+//this just tests whatever we are working on
 int main()
 {
 	srand((unsigned)time(0));
-	Population testPop = Population(3);
+	Population pop = Population(7);
+	bool done = false;
+	string status = "";
 
-	testPop.runSim1();
-	//testPop.getPop(0).infect(5);
-	
-	//testPop.neighborInfect();
-	//cout << testPop.getPop(0).status_string() << endl;
+	pop.random_infection();
+	cout << pop.count_infected() << endl;
 
-	//issue with "getPop", was trying to return Person, function 
-	//definition actually returned a vector
-
-	/*
-	bool stable = testPop.getPop(0).is_stable();
-	while (!stable)
+	while (!done)
 	{
-		testPop.getPop(0).update();
-		cout << testPop.getPop(0).status_string() << endl;
-		stable = testPop.getPop(0).is_stable();
+		pop.neighborInfect();
+		cout << pop.count_infected() << endl;
+		pop.update();
+		if (pop.count_infected() == 0)
+		{
+			done = true;
+		}
+		
 	}
-	*/
 
-	return 0;
+	
+	
 }
