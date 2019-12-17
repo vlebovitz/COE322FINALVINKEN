@@ -60,6 +60,7 @@ public:
 		else if (condition == -4) {
 			return "vaccinated";
 		}
+		//use the line that was commented out to test results
 		else {
 			//string result = "sick, " + std::to_string(condition) + " day(s) left.";
 			return "sick";
@@ -115,7 +116,7 @@ class Population : public Person {
 protected:
 	vector<Person> pop = {};
 	int n, day;
-	float probability;
+	float p;
 public:
 
 	//Default constructor, mainly a tester - one person in the population
@@ -145,17 +146,15 @@ public:
 		//cout << dude << endl;
 		pop[dude].infect(5); //default: sick for 5 days...might want to allow change
 
-
-
 	}
 
 	//sets the probability of 
 	void set_probability_of_transfer(float probability)
 	{	
-		probability = 0.6;
-	
+		p = probability;
 	}
-	//creates algorithm for interactions
+
+	//currently has entire population interat with phantom person
 	void reactionRate()
 	{
 		float rate = 0;
@@ -174,6 +173,9 @@ public:
 			
 		}
 	}
+
+	void 
+
 
 	//counts the number of infected people in the population
 	int count_infected()
@@ -201,16 +203,11 @@ public:
 
 	//this function runs the simulation by looping the update method
 	//from the population 
-	void runSim()
+	void runSimTest()
 	{
 		//do we need to use "this" as done in JAVA??
 		int x = 1; //want to do this on the current obj
 		random_infection();
-
-
-
-
-		
 
 		//should also write print statements here
 		//might want to create separate methods or something; 
@@ -223,10 +220,25 @@ public:
 			day++;
 		}
 	}
-	void runSim1()//!!this is the actual function for testing!!
+	//might want to create different sims for different "Qs", or 
+	//could just write it in the main program
+	void runSim1()//!!this is the actual function we will use!!!
 	{
 		reactionRate();
 
+
+		int x = 1; //want to do this on the current obj
+		random_infection();
+
+		while (x > 0 || day < 6) //added day < 6 to go beyond infection period
+		{
+
+			
+
+			update();
+			x = count_infected();
+			day++;
+		}
 	}
 
 	//most likely need to add a setter method to allow me to access
@@ -242,12 +254,18 @@ public:
 
 };
 
+
+//note - we might want to create multiple main programs and turn them in;
+//they would output the stuff at each separate step - do we need a main program 
+//for this file if it only contains the classes????
+
+//this just tests whatever we are working on
 int main()
 {
 	srand((unsigned)time(0));
 	Population testPop = Population();
 
-	testPop.runSim();
+	testPop.runSimTest();
 	//testPop.getPop(0).infect(5);
 	//cout << testPop.getPop(0).status_string() << endl;
 
