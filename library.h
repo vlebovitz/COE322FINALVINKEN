@@ -1,5 +1,7 @@
-// this is the file containing most of my object definitions
+// this is the HEADER file containing our object definitions
 // for the COE322 final project (disease propagation)
+
+//copied this over 2 am; need to recopy to update methods!!!
 
 #include <iostream>
 #include <random>
@@ -417,6 +419,12 @@ public:
 //they would output the stuff at each separate step - do we need a main program 
 //for this file if it only contains the classes????
 
+
+
+/* commented out this main program; still use in main.cpp to test
+
+--------------------------------------------------------------------------
+
 //this just tests whatever we are working on
 int main()
 {
@@ -468,5 +476,5 @@ int main()
 	Population testPop = Population(8);
 	testPop.set_innoculation(.25); //vacinates 1/4 of the population
 	//printing within set_innoculation to test the method
-	*/
-}
+	/*
+*/
