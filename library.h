@@ -1,7 +1,8 @@
-// this is the HEADER file containing our object definitions
-// for the COE322 final project (disease propagation)
+//Kenneth Meyer: klm5375
+//Vincent Lebovitz: vjl369
 
-//copied this over 2 am; need to recopy to update methods!!!
+// this is the file containing most of our object definitions
+// for the COE322 final project (disease propagation)
 
 #include <iostream>
 #include <random>
@@ -15,39 +16,25 @@ using std::string;
 using std::vector;
 //using std::to_string;
 
-//consider using a compartmental model in addition to a contact model
 class Person {
 
 private:
 	//could create a constant, SSN, as an identifier lol
 	//could use age? age -> changing interactions and 
 	//ability to be infected (idea)
-	int condition; //days; //would SSN need to be global to ensure no repition?
-	string name;
+	int condition;
 public:
 	//Default constructor
 	Person()
 	{
 		//n(days left): sick, -2: susceptible, 0: recovered, -4: vaccinated
 		condition = -2; //default condition is susceptible
-		name = "avgJoe";
-	
-
-		//days = 0;
-		//SSN = SSN_recent + 1;
 	}
 
-	//Constructor that allows us to determine a person's state
-	//not sure if we want to use this; can easily just infect somebody...
-	//only real use would be to vaccinate people; could actually do this randomly
-	//need to figure out best way to create 10k people objects
+	//Constructor that allows us to determine a person's state - not actually used
 	Person(int state) //probably won't end up using this constructor
 	{
 		condition = state;
-		name = "avgJoe";
-	
-		//days = 0;
-		//SSN = SSN_recent + 1;
 	}
 
 	//returns description of person's state as a string
@@ -72,23 +59,29 @@ public:
 	//updates the person's status to the next day
 	void update() //might just make this an int
 	{
-		//not entirely sure what to put here/how to update, might need to
-		//introduce another method called "contact" or something
-
-		//this could be expanded upon maybe or something...idk lol
-
-
-		//only for testing purposes - need to alter this function
-		//cout << "Joe is " << status_string() << endl;
-
 		//increments n by -1 if it is non zero, stops when equal to zero
 		if (condition > 0) {
 			condition--;
 		}
-
-
 	}
+	//simulates contact between two people, determines if a contact results in an infection
+	//might be bad form; contact can infect someone from anybody - that is why we only let infected
+	//people come into contact with other people in all of our methods (is also faster to do so)
 
+	//for this specified sickness, we set the length of the disease to 5 days
+	//this can (and probably should) be changed for different models
+	void contact(Person &joe, float p)
+	{
+		float x = double(rand())/ RAND_MAX;
+		//cout << "random num: " << x << endl;
+		//checks probability and if the person contacting joe is sick
+		
+		if (x < p /*&& condition > 0*/) //condition is always -2, idk why; only contact occurs
+		//between a sick person and a person joe anyway so it should be ok
+		{
+			joe.infect(5);
+		}
+	}
 	//infect a person, disease runs for n days
 	void infect(int n)
 	{
@@ -97,7 +90,6 @@ public:
 		}
 		//cout << n << endl;
 		//days = n;
-
 	}
 
 	//vaccinates a person - sets their condition to -4
@@ -107,10 +99,9 @@ public:
 	}
 
 	//indicates whether the person has been sick and is recovered
-	//NOTE: probably should return true for vaccinated and recovered (?)
 	bool is_stable()
 	{
-		if (condition == 0 || condition == -4) {
+		if (condition == 0){
 			return true;
 		}
 		else {
@@ -118,15 +109,15 @@ public:
 		}
 	}
 
-	//sole purpose is to write to a text file
+	//main purpose is to output to data file and terminal window
+	//should have written separate methods, like is_stable(), as this
+	//would make our main programs easier to understand/prevent silly errors
 	int get_condition()
 	{
 		return condition;
 	}
 
-	/* might want to create an "is vaccinated" method, original
-		condition above for is_stable() was if condition == 0 || condition == -4
-
+	/* used a get_condition method to replace this
 	bool is_vaccinated()
 	{
 		if(condition == -4){
@@ -135,8 +126,6 @@ public:
 			return false;
 		}
 	}
-
-
 	*/
 
 };
@@ -155,9 +144,6 @@ public:
 	//Default constructor, mainly a tester - one person in the population
 	Population()
 	{
-		//combined lines
-		//Person person1 = Person(); - could be useful to track 
-		//the "first" person as an example/to print out easily
 		pop.push_back(Person());
 		n = 1;
 		day = 0;
@@ -177,8 +163,12 @@ public:
 	{
 		//might need to avoid 
 		int dude = rand() % n;
-
-		//most likely want to allow this to be changed!!!
+		//cout << pop[dude].get_condition() << endl;
+		//makes sure a vaccinated person is not infected
+		while(pop[dude].get_condition() == -4){
+			dude = rand() % n;
+			//cout << pop[dude].get_condition() << endl;
+		}
 		pop[dude].infect(5); 
 
 	}
@@ -190,17 +180,19 @@ public:
 		p = probability;
 	}
 
-	//not working, not sure why - uncommented old code I commented out; not of most importance
-	//simulates contact between two people, determines if a contact results in an infection
-	void contact(Person joe)
+	/* moved method to person class
+	void contact(Person &joe)
 	{
-		//don't need to use srand(time(NULL)) here, only need to include it in the main programs (I THINK)
+		//srand(time(NULL));
+		//srand((unsigned)time(0));
 		float x = double(rand())/ RAND_MAX;
+		cout << "random num: " << x << endl;
 		if (x < p)
 		{
 			joe.infect(5);
 		}
 	}
+	*/
 
 	//sets the % (0<x<1) of people who are vaccinated; sets that portion of the
 	//population's condition to "vaccinated"
@@ -245,12 +237,12 @@ public:
 	}
 
 	//function that simulates interactions, where people can only interact with their neighbors in the arrary
-	void neighborInfect()
+	void neighborInfect(float prob)
 	{
 		//when vaccinated people are added to the area, they act as boundaries/prevent disease spread
 		double rate = 0;
-		srand(time(NULL));
-		set_probability_of_transfer(0.6);
+		//srand(time(NULL));
+		set_probability_of_transfer(prob);
 		vector<int> totalInfected = {};
 
 		for (int j = 0; j < n; j++)
@@ -275,25 +267,16 @@ public:
 			//rate = rand() / RAND_MAX; //need to do this right before someone is infected (can infect 2 ppl)
 			if (pop[totalInfected[i]].status_string() == "sick")
 			{
+				//treats boundaries separately as they only have one neighbor
 				if (totalInfected[i] > 0 && totalInfected[i] < (n - 1))
 				{
 					if (pop[totalInfected[i]+1].status_string() == "susceptible")
 					{
-						//contact(pop[totalInfected[i]+1]);
-						rate = double(rand())/ RAND_MAX;
-						if (rate < p)
-						{
-							pop[totalInfected[i]+1].infect(5);
-						}
+						pop[totalInfected[i]].contact(pop[totalInfected[i]+1],p);
 					}
 					if (pop[totalInfected[i]-1].status_string() == "susceptible")
 					{
-						//contact(pop[totalInfected[i]-1]);
-						rate = double(rand())/ RAND_MAX;
-						if (rate < p)
-						{
-							pop[totalInfected[i]-1].infect(5);
-						}
+						pop[totalInfected[i]].contact(pop[totalInfected[i]-1],p);
 					}
 				}
 				//decided to treat ends of vector as boundaries/dead ends
@@ -301,47 +284,123 @@ public:
 				{
 					if (pop[totalInfected[i]+1].status_string() == "susceptible")
 					{
-						//contact(pop[totalInfected[i]+1]);
-						rate = double(rand())/ RAND_MAX;
-						if (rate < p)
-						{
-							pop[totalInfected[i]+1].infect(5);
-						}
+						pop[totalInfected[i]].contact(pop[totalInfected[i]+1],p);
 					}
 				}
 				else
 				{
 					if (pop[totalInfected[i]-1].status_string() == "susceptible")
 					{
-						//contact(pop[totalInfected[i]-1]);
-						rate = double(rand())/ RAND_MAX;
-						if (rate < p)
-						{
-							pop[totalInfected[i]-1].infect(5);
-						}
+						pop[totalInfected[i]].contact(pop[totalInfected[i]-1],p);
 					}
 				}
 
 			}
 		}
 		//outputs the results for testing purposes
-		for (int i = 0; i < n; i++)
-		{
-			cout << pop[i].get_condition();
-		}
-		cout << endl;
+		//for (int i = 0; i < n; i++)
+		//{
+			//cout << pop[i].get_condition();
+		//}
+		//cout << endl;
 	}
-
+	//method is not the most effective (brute forces that random numbers) but it works and isn't THAT slow
 	//function that "codes random interactions" - y = # people each person interacts with, y < n-1
-	void random_interation(int y)
+	//was supposed to be "random_interaction, typo but didn't change lol"
+	void random_interation(int y, float prob)
 	{
+		//can ignore large comment section, was my thought process
+
+		//----------------------------------------------------------------
+
 		//need to figure out some way to connect the people
 		//should I use graph theory? brute force?....
 		//can possibly incorporate the knuth algorithm thing into this
 
 		//only becomes challenging when # sick people > n interactions (which almost always happens)
-	}
+		//AND whenever random number gen is trying to pick a small portion of the nums
 
+		//idea: contact matrix like cities connected via airports
+
+		//easier: start with the first person, have them interact with 6 people,
+		//then "remove" them from the list/random #generator. if someone is interacted
+		//with 6 times, also remove them from the list.
+
+
+		/* Previous attempts; convoluded
+		--------------------------------------------------------------------
+		//create vector with same number of elements as number of infected ppl
+		vector<*Person> pointer_pop (pop.count_infected(),NULL); //not sure if this should be null
+		vector<int> interactionCount(n,0);
+
+		//only need to track interactions that include an infected person
+		for(int i = 0; i < n; i++){
+			if(pop[i].get_condition() > 0){
+				pointer_pop[i] == &pop[i]; //not sure if this is the right way to declare a pointer
+				//might want to make a person pointer, then set pointer
+				//equal to pop[i], set arrary equal to that...but then would have to deference the pointer?.....
+				//need to figure out the best way to do this!!!!
+			}
+		}
+				
+		//
+		for(int j = 0; j < pointer_pop.size(); j++){
+			//randomly interact with 6 people (knuble shuffle?)
+			//checks that the person objects are not equal i.e. would be contacting itself
+
+			while()
+			//if(interaction_count[randomnum] == 6){
+				//pop this and the element in the pointer_pop vector
+			//}
+
+
+			//only commented to test mainNEigh_vacc thing
+			//pointer_pop.pop();
+
+		}
+		------------------------------------------------------------------------
+		*/
+
+		vector<int> sickLocations = {};
+		for(int z = 0; z < n; z++){
+			if(pop[z].get_condition() > 0){
+				sickLocations.push_back(z);
+			}
+		}
+		vector<int> interactionCount(n,0);
+		set_probability_of_transfer(prob); //need to pass p to contact function
+		//this should work, but is slow....would benefit from removing the people who have been interacted with 6 times
+		int randIndex;
+		for(auto k : sickLocations){
+			//skips the person if they are not sick (only initiating contact from sick people
+			//will create all the necessary interactions; avoids interactions btw 2 nonsick ppl
+			if(pop[k].get_condition() < 1 || interactionCount[k] >= y){
+				continue;
+			}
+			//it is possible for someone to have to "contact themselves"
+			//this is an interesting graph theory problem; not going to solve it today lol
+			while(interactionCount[k] < y){
+				//allows people to contact the same people multiple times
+				randIndex = rand()%n;
+				if(interactionCount[randIndex] == y){
+					continue;
+				}//else if(interactionCount)
+				//allows people to infect themselves as an escape condition
+				else if(randIndex == k && n - count_infected() < 2 && interactionCount[k] < y - 2) // <2 or <number of interactions?....
+				{
+					contact(pop[randIndex],p);
+					interactionCount[randIndex]++;
+					interactionCount[k]++;
+				}else{
+					contact(pop[randIndex],p);
+					interactionCount[randIndex]++;
+					interactionCount[k]++;
+				}
+				//cout << "test" << endl;
+			}
+		}
+	}
+	
 	//counts the number of infected people in the population
 	int count_infected()
 	{
@@ -353,7 +412,17 @@ public:
 		}
 		return num;
 	}
-
+	//returns the number of stable ppl in the population
+	int count_stable()
+	{
+		int num = 0;
+		for (int i = 0; i < n; i++) {
+			if (pop[i].is_stable()){
+				num++;
+			}
+		}
+		return num;
+	}
 	//updates the condition of every member in the population
 	void update()
 	{
@@ -365,116 +434,8 @@ public:
 			pop[i].update();
 		}
 	}
-
-	//simulations will be written as main programs; delete
-	void runSimTest()
-	{
-		//do we need to use "this" as done in JAVA??
-		int x = 1; //want to do this on the current obj
-		random_infection();
-
-		//should also write print statements here
-		//might want to create separate methods or something; 
-		//want to allow different ways to show output....
-		while (x > 0 || day < 6) //added day < 6 to go beyond infection period
-		{
-
-			update();
-			x = count_infected();
-			day++;
-		}
-	}
-	//simulations will be written as main programs; delete
-	void runSim1() //delete this
-	{
-		//reactionRate();
-
-
-		int x = 1; //want to do this on the current obj
-		random_infection();
-
-		while (x > 0 || day < 6) //added day < 6 to go beyond infection period
-		{
-			update();
-			x = count_infected();
-			day++;
-		}
-	}
-
-	//most likely need to add a setter method to allow me to access
-	//values in the vector of people
-
-	//will "getting" the vector then infecting the person change the value of 
-	//the person/change their status??? (and be updated in the vector??)
 	vector<Person> getPop()
 	{
 		return pop;
 	}
-
-
 };
-
-
-//note - we might want to create multiple main programs and turn them in;
-//they would output the stuff at each separate step - do we need a main program 
-//for this file if it only contains the classes????
-
-
-
-/* commented out this main program; still use in main.cpp to test
-
---------------------------------------------------------------------------
-
-//this just tests whatever we are working on
-int main()
-{
-	srand((unsigned)time(0));
-	Population pop = Population(7);
-	bool done = false;
-	string status = "";
-
-	pop.random_infection();
-	cout << pop.count_infected() << endl;
-
-	while (!done)
-	{
-		pop.neighborInfect();
-		cout << pop.count_infected() << endl;
-		pop.update();
-		if (pop.count_infected() == 0)
-		{
-			done = true;
-		}
-	}
-
-
-	Population pop1 = Population(7);
-	done = false;
-	status = "";
-
-	//need to make sure my randon_infected and innoculation methods 
-	//don't overlap (it's only one person, but technically doesn't work as intended)
-	pop1.set_innoculation(.25); //only one innoculated person will block spread lol
-	pop1.random_infection(); //ensures at least one person is infected
-	cout << pop1.count_infected() << endl;
-
-	while (!done)
-	{
-		pop1.neighborInfect();
-		cout << pop1.count_infected() << endl;
-		pop1.update();
-		if (pop1.count_infected() == 0)
-		{
-			done = true;
-		}
-	}
-	return 0;
-	/* code below tested set_innoculation to check that it worked
-
-	//should write an actual test method to test in conjuction with 
-	//infect_neighbor; this is just testing the function
-	Population testPop = Population(8);
-	testPop.set_innoculation(.25); //vacinates 1/4 of the population
-	//printing within set_innoculation to test the method
-	/*
-*/

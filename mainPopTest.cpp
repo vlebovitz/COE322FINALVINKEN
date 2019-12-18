@@ -1,3 +1,6 @@
+//Kenneth Meyer: klm5375
+//Vincent Lebovitz: vjl369
+
 //main program that tests a small population
 
 //produces sample output with ?s, +s, -s, 
@@ -14,6 +17,7 @@ using std::string;
 
 int main()
 {
+	cout << "Testing Population class, no transmission allowed: " << endl;
 	srand((unsigned)time(0));
 	Population pop = Population(7);
 

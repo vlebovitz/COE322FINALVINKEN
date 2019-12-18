@@ -1,3 +1,6 @@
+//Kenneth Meyer: klm5375
+//Vincent Lebovitz: vjl369
+
 //main program to test simple population, where the population is one person
 
 //need to rename the file titled "main.cpp" to "library"
@@ -10,6 +13,7 @@ using std::endl;
 //does not employ the "population" function
 int main()
 {
+	cout << "Testing Person class: " << endl;
 	srand((unsigned)time(0));
 	//Population pop = Population(7);
 
